@@ -69,7 +69,8 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "any": "cpp"
     },
     "cmake.sourceDirectory": "/home/harou/Projet-C++/juce-8.0.7-linux/JUCE"
 }
