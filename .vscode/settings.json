@@ -72,5 +72,5 @@
         "variant": "cpp",
         "any": "cpp"
     },
-    "cmake.sourceDirectory": "/home/harou/Projet-C++/juce-8.0.7-linux/JUCE"
+    "cmake.sourceDirectory": "/home/harou/Projet-C++/Crow/tests/multi_file"
 }

@@ -1,8 +1,10 @@
 #pragma once
 #include "crow.h"
 #include "../controller/employer.controller.hpp"
-
-void EmployeRoutes(crow::SimpleApp& app, mongocxx::database& db) {
+#include "../cors.middleware/cors.hpp"
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+void EmployeRoutes(crow::App<CORS>& app, mongocxx::database& db) {
     using namespace employecontroler;
 
     CROW_ROUTE(app, "/employes/add").methods("POST"_method)([&db](const crow::request& req) {

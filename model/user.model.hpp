@@ -2,10 +2,10 @@
 #include <bsoncxx/json.hpp>
 #include <bsoncxx/builder/stream/document.hpp>
 #include <string>
-
+#include "../cors.middleware/cors.hpp"
 namespace employemodel {
    bool insertEmploye(mongocxx::database& db, const std::string& nom, const std::string& email,
-                   const std::string& poste, const std::string& affectation, int conger) {
+                   const std::string& poste, const std::string& affectation,const std::string& conger) {
     try {
         bsoncxx::builder::stream::document document{};
         document << "nom" << nom

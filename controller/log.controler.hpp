@@ -1,27 +1,45 @@
 #pragma once
 #include "crow.h"
 #include "../model/admin.model.hpp"
+#include "../cors.middleware/cors.hpp"
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace logcontroler {
-    crow::response login(const crow::request& req, crow::response& res, mongocxx::database& db) {
-        auto body = crow::json::load(req.body);
-        if (!body) return crow::response(400, "JSON invalide");
+    crow::response login(const crow::request& req, mongocxx::database& db) {
+        json body;
+        try {
+            body = json::parse(req.body);
+        } catch (const json::parse_error& e) {
+            return crow::response(400, json{{"message", "JSON invalide: " + std::string(e.what())}}.dump());
+        }
 
-        std::string name = body["name"].s();
-        std::string password = body["password"].s();
+        if (!body.contains("name") || !body.contains("password")) {
+            return crow::response(400, json{{"message", "Champs 'name' ou 'password' manquants"}}.dump());
+        }
 
-        
+        std::string name;
+        std::string password;
+       
+            name = body["name"].get<std::string>();
+            password = body["password"].get<std::string>();
+      
+
         const std::string adminName = "admin";
         const std::string adminPass = "admin123";
 
         if (name == adminName && password == adminPass) {
-            return crow::response(200, "Connexion admin réussie");
+            std::cout<<"succes";
+            json response = {{"message", "Connexion admin réussie"}};
+            return crow::response(200, response.dump());
         } else {
-            // Création d'utilisateur seulement si échec d'authentification
             if (adminmodel::insertUser(db, name, password)) {
-                return crow::response(200, "Nouvel utilisateur enregistré !");
+                json response = {{"message", "Nouvel utilisateur enregistré !"}};
+                return crow::response(200, response.dump());
             } else {
-                return crow::response(500, "Erreur lors de l'ajout");
+                json response = {{"message", "Erreur lors de l'ajout"}};
+                return crow::response(500, response.dump());
             }
         }
     }

@@ -1,19 +1,30 @@
 #pragma once
 #include "crow.h"
 #include "../model/user.model.hpp"
-
+#include "../cors.middleware/cors.hpp"
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 namespace employecontroler {
     crow::response ajouter(const crow::request& req, mongocxx::database& db) {
-        auto body = crow::json::load(req.body);
-        if (!body)
-            return crow::response(400, "Données JSON invalides");
-
-        std::string nom = body["nom"].s();
-        std::string email = body["email"].s();
-        std::string poste = body["poste"].s();
-        std::string affectation = body["affectation"].s();
-        int conger = body["conger"].i();
-
+     
+      json body;
+    try {
+        body = json::parse(req.body);
+    } catch (const json::parse_error& e) {
+        return crow::response(400, "JSON invalide: " + std::string(e.what()));
+    }
+           std::string nom, email, poste,affectation,conger;
+         
+try{
+        nom = body["nom"].get<std::string>();
+        email = body["email"].get<std::string>();
+        poste = body["poste"].get<std::string>();
+        affectation = body["affectation"].get<std::string>();
+        conger = body["conger"].get<std::string>();
+       
+} catch (const json::exception& e) {
+        return crow::response(400, "Erreur dans les types des champs: " + std::string(e.what()));
+    }
         
         if (employemodel::insertEmploye(db, nom, email,poste,affectation,conger)) {
             std::cout << "Insertion réussie dans la base MongoDB.\n";
@@ -37,27 +48,7 @@ namespace employecontroler {
         emp["email"] = std::string(doc["email"].get_string().value);
         emp["poste"] = std::string(doc["poste"].get_string().value);
         emp["affectation"] = std::string(doc["affectation"].get_string().value);
-
-        // Handle different types for conger
-        try {
-            auto conger = doc["conger"];
-            if (conger.type() == bsoncxx::type::k_int32) {
-                emp["conger"] = conger.get_int32().value;
-            } else if (conger.type() == bsoncxx::type::k_int64) {
-                emp["conger"] = static_cast<int>(conger.get_int64().value); // Convert int64 to int
-            } else if (conger.type() == bsoncxx::type::k_double) {
-                emp["conger"] = static_cast<int>(conger.get_double().value); // Convert double to int
-            } else if (conger.type() == bsoncxx::type::k_string) {
-                emp["conger"] = std::stoi(std::string(conger.get_string().value)); // Convert string to int
-            } else {
-                std::cerr << "Unexpected type for conger: " << static_cast<int>(conger.type()) << std::endl;
-                return crow::response(500, "Type de données inattendu pour conger");
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Error processing conger: " << e.what() << std::endl;
-            return crow::response(500, "Erreur lors du traitement du champ conger");
-        }
-
+        emp["conger"] = std::string(doc["conger"].get_string().value);
         result[i++] = std::move(emp);
     }
 
@@ -82,7 +73,7 @@ crow::response modifier(const crow::request& req, mongocxx::database& db, const 
                    << "email" << body["email"].s()
                    << "poste" << body["poste"].s()
                    << "affectation" << body["affectation"].s()
-                   << "conger" << body["conger"].i()
+                   << "conger" << body["conger"].s()
                    << bsoncxx::builder::stream::close_document;
 
     auto result = db["employes"].update_one(filter_builder.view(), update_builder.view());
@@ -130,27 +121,7 @@ crow::response afficher(mongocxx::database& db, const std::string& id) {
     emp["email"] = std::string(doc["email"].get_string().value);
     emp["poste"] = std::string(doc["poste"].get_string().value);
     emp["affectation"] = std::string(doc["affectation"].get_string().value);
-
-    // Handle different types for conger
-    try {
-        auto conger = doc["conger"];
-        if (conger.type() == bsoncxx::type::k_int32) {
-            emp["conger"] = conger.get_int32().value;
-        } else if (conger.type() == bsoncxx::type::k_int64) {
-            emp["conger"] = static_cast<int>(conger.get_int64().value); // Convert int64 to int
-        } else if (conger.type() == bsoncxx::type::k_double) {
-            emp["conger"] = static_cast<int>(conger.get_double().value); // Convert double to int
-        } else if (conger.type() == bsoncxx::type::k_string) {
-            emp["conger"] = std::stoi(std::string(conger.get_string().value)); // Convert string to int
-        } else {
-            std::cerr << "Unexpected type for conger: " << static_cast<int>(conger.type()) << std::endl;
-            return crow::response(500, "Type de données inattendu pour conger");
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Error processing conger: " << e.what() << std::endl;
-        return crow::response(500, "Erreur lors du traitement du champ conger");
-    }
-
+    emp["conger"] = std::string(doc["conger"].get_string().value);
     return crow::response(200, emp);
 }
 }
