@@ -3,14 +3,27 @@
 #include <bsoncxx/builder/stream/document.hpp>
 #include <string>
 
-struct User {
-    std::string nom;
-    std::string poste;
-    std::string conge;
-    std::string email;
+namespace employemodel {
+   bool insertEmploye(mongocxx::database& db, const std::string& nom, const std::string& email,
+                   const std::string& poste, const std::string& affectation, int conger) {
+    try {
+        bsoncxx::builder::stream::document document{};
+        document << "nom" << nom
+                 << "email" << email
+                 << "poste" << poste
+                 << "affectation" << affectation
+                 << "conger" << conger;
 
-    bsoncxx::document::value to_bson() const {
-        using namespace bsoncxx::builder::stream;
-        return document{} << "nom" << nom << "poste" << poste << "conge" << conge << "email"<< email<< finalize;
+        auto collection = db["employes"];
+        collection.insert_one(document.view());
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Erreur MongoDB : " << e.what() << std::endl;
+        return false;
     }
-};
+}
+
+   mongocxx::cursor getAllEmployes(mongocxx::database& db) {
+        return db["employes"].find({});
+    }
+}
