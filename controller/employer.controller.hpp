@@ -27,18 +27,36 @@ namespace employecontroler {
     }
 
    crow::response lister(mongocxx::database& db) {
-       auto cursor = db["employes"].find({});
     crow::json::wvalue result;
     int i = 0;
 
     for (auto doc : employemodel::getAllEmployes(db)) {
         crow::json::wvalue emp;
-        emp["id"] = doc["_id"].get_oid().value.to_string(); 
+        emp["id"] = doc["_id"].get_oid().value.to_string();
         emp["nom"] = std::string(doc["nom"].get_string().value);
         emp["email"] = std::string(doc["email"].get_string().value);
-        emp["poste"] = std::string(doc["poste"].get_string().value);  // <-- corrigé: "poste" et non "post"
+        emp["poste"] = std::string(doc["poste"].get_string().value);
         emp["affectation"] = std::string(doc["affectation"].get_string().value);
-        emp["conger"] = doc["conger"].get_int32().value;
+
+        // Handle different types for conger
+        try {
+            auto conger = doc["conger"];
+            if (conger.type() == bsoncxx::type::k_int32) {
+                emp["conger"] = conger.get_int32().value;
+            } else if (conger.type() == bsoncxx::type::k_int64) {
+                emp["conger"] = static_cast<int>(conger.get_int64().value); // Convert int64 to int
+            } else if (conger.type() == bsoncxx::type::k_double) {
+                emp["conger"] = static_cast<int>(conger.get_double().value); // Convert double to int
+            } else if (conger.type() == bsoncxx::type::k_string) {
+                emp["conger"] = std::stoi(std::string(conger.get_string().value)); // Convert string to int
+            } else {
+                std::cerr << "Unexpected type for conger: " << static_cast<int>(conger.type()) << std::endl;
+                return crow::response(500, "Type de données inattendu pour conger");
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Error processing conger: " << e.what() << std::endl;
+            return crow::response(500, "Erreur lors du traitement du champ conger");
+        }
 
         result[i++] = std::move(emp);
     }
@@ -108,13 +126,31 @@ crow::response afficher(mongocxx::database& db, const std::string& id) {
     auto doc = result->view();
     crow::json::wvalue emp;
     emp["id"] = doc["_id"].get_oid().value.to_string();
-    emp["nom"] = std::string(doc["nom"].get_string().value);         
-    emp["email"] = std::string(doc["email"].get_string().value);     
-    emp["poste"] = std::string(doc["poste"].get_string().value);     
-    emp["affectation"] = std::string(doc["affectation"].get_string().value); 
-    emp["conger"] = doc["conger"].get_int32().value;
+    emp["nom"] = std::string(doc["nom"].get_string().value);
+    emp["email"] = std::string(doc["email"].get_string().value);
+    emp["poste"] = std::string(doc["poste"].get_string().value);
+    emp["affectation"] = std::string(doc["affectation"].get_string().value);
+
+    // Handle different types for conger
+    try {
+        auto conger = doc["conger"];
+        if (conger.type() == bsoncxx::type::k_int32) {
+            emp["conger"] = conger.get_int32().value;
+        } else if (conger.type() == bsoncxx::type::k_int64) {
+            emp["conger"] = static_cast<int>(conger.get_int64().value); // Convert int64 to int
+        } else if (conger.type() == bsoncxx::type::k_double) {
+            emp["conger"] = static_cast<int>(conger.get_double().value); // Convert double to int
+        } else if (conger.type() == bsoncxx::type::k_string) {
+            emp["conger"] = std::stoi(std::string(conger.get_string().value)); // Convert string to int
+        } else {
+            std::cerr << "Unexpected type for conger: " << static_cast<int>(conger.type()) << std::endl;
+            return crow::response(500, "Type de données inattendu pour conger");
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error processing conger: " << e.what() << std::endl;
+        return crow::response(500, "Erreur lors du traitement du champ conger");
+    }
 
     return crow::response(200, emp);
-
 }
 }

@@ -2,7 +2,7 @@
 #include "crow.h"
 #include "../controller/employer.controller.hpp"
 
-void addEmployeRoutes(crow::SimpleApp& app, mongocxx::database& db) {
+void EmployeRoutes(crow::SimpleApp& app, mongocxx::database& db) {
     using namespace employecontroler;
 
     CROW_ROUTE(app, "/employes/add").methods("POST"_method)([&db](const crow::request& req) {
