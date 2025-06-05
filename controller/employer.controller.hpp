@@ -38,21 +38,20 @@ try{
     }
 
    crow::response lister(mongocxx::database& db) {
-    crow::json::wvalue result;
-    int i = 0;
-
+    json result = json::array();
+  
     for (auto doc : employemodel::getAllEmployes(db)) {
-        crow::json::wvalue emp;
+        json emp;
         emp["id"] = doc["_id"].get_oid().value.to_string();
         emp["nom"] = std::string(doc["nom"].get_string().value);
         emp["email"] = std::string(doc["email"].get_string().value);
         emp["poste"] = std::string(doc["poste"].get_string().value);
         emp["affectation"] = std::string(doc["affectation"].get_string().value);
         emp["conger"] = std::string(doc["conger"].get_string().value);
-        result[i++] = std::move(emp);
+        result.push_back(emp);
     }
 
-    return crow::response(200, result);
+    return crow::response(200, result.dump());
 }
 crow::response modifier(const crow::request& req, mongocxx::database& db, const std::string& id) {
     auto body = crow::json::load(req.body);

@@ -11,7 +11,7 @@ int main() {
     crow::App<CORS>app;
     mongocxx::instance instance{};
     mongocxx::client client{mongocxx::uri{}};
-    auto db = client["gestion_personnel"];
+    auto db = client["gestion"];
 
     loginRoute(app, db);         
     EmployeRoutes(app, db);  
